@@ -1,99 +1,210 @@
-const uuid = require('uuid/v4');
+const fs = require("fs");
+const mongoose = require("mongoose");
+const User = require("../models/user");
+const Contact = require("../models/contacts");
+const HttpError = require("../models/http-error");
+const { validationResult } = require("express-validator");
 
-const HttpError = require('../models/http-error');
+const getAllContacts = async (req, res, next) => {
+  let contact;
+  try {
+    contact = await Contact.find();
+  } catch (err) {
+    const error = new HttpError(
+      "Something went wrong, could not find contact",
+      500
+    );
 
-const DUMMY_CONTACTS = [
-  {
-    id: "c1",
-    title: "Itahari",
-    description: "One of the most famous contact in Nepal.",
-    imageUrl: "https://www.peoplecontact.com.co/images/peoplecontact-1.png",
-    phone: "9810456210",
-    address: "Itahari, Sunsari",
-    creator: "u1",
-  },
-  {
-    id: "c2",
-    title: "Biratnagar",
-    description: "One of the most famous contact in Nepal.",
-    imageUrl: "https://www.peoplecontact.com.co/images/peoplecontact-1.png",
-    phone: "9810456210",
-    address: "Itahari, Sunsari",
-    creator: "u2",
-  },
-  {
-    id: "c3",
-    title: "Dharan",
-    description: "One of the most famous contact in Nepal.",
-    imageUrl: "https://www.peoplecontact.com.co/images/peoplecontact-1.png",
-    phone: "9810456210",
-    address: "Itahari, Sunsari",
-    creator: "u1",
-  },
-];
-
-const getAllContacts = (req, res, next) => {
-
-  let allContacts = [];
-
- DUMMY_CONTACTS.forEach(contact => {
-    allContacts.push(contact);
-  });
-
-  if (DUMMY_CONTACTS.length === 0) {
-    throw new HttpError("Could not find any contacts.", 404);
+    return next(error);
   }
-  
-  res.json({ allContacts });
 
-};
-const getContactById = (req, res, next) => {
-  const contactId = req.params.pid;
-
-  const contact = DUMMY_CONTACTS.find((p) => {
-    return p.id === contactId;
-  });
-
-  if (!contact) {
-    throw new HttpError("Could not find a contact for the provided id.", 404);
+  if (contact.length === 0) {
+    throw new HttpError("Could not find any contacts.", 404);
   }
 
   res.json({ contact });
 };
 
-const getContactByUserId = (req, res, next) => {
-  const userId = req.params.uid;
+const getContactById = async (req, res, next) => {
+  const contactId = req.params.pid;
 
-  const contact = DUMMY_CONTACTS.find((p) => {
-    return p.creator === userId;
-  });
+  let contact;
+  try {
+    contact = await Contact.findById(contactId);
+  } catch (err) {
+    const error = new HttpError(
+      "Something went wrong, could not find contact",
+      500
+    );
+
+    return next(error);
+  }
 
   if (!contact) {
+    const error = new HttpError(
+      "Could not find a contact for the provided id.",
+      404
+    );
+
+    return next(error);
+  }
+
+  res.json({ contact: contact.toObject({ getters: true }) });
+};
+
+const getContactsByUserId = async (req, res, next) => {
+  const userId = req.params.uid;
+  let userWithContacts;
+
+  try {
+    userWithContacts = await User.findById(userId).populate("contacts");
+  } catch (err) {
+    const error = new HttpError(
+      "Something went wrong, could not find contact",
+      500
+    );
+
+    return next(error);
+  }
+
+  if (!userWithContacts || userWithContacts.contacts.length === 0) {
     return next(
-      new HttpError("Could not find a contact for the provided user id.", 404)
+      new HttpError("Could not find contacts for the provided user id.", 404)
     );
   }
 
-  res.json({ contact });
+  res.json({
+    contacts: userWithContacts.contacts.map((contact) =>
+      contact.toObject({ getters: true })
+    ),
+  });
 };
 
-const createContact = (req, res, next) => {
+const createContact = async (req, res, next) => {
+  const error = validationResult(req);
+
+  if (!error.isEmpty()) {
+    throw new HttpError("Invalid inputs, please check your data", 422);
+  }
   const { title, description, phone, address, creator } = req.body;
-  const createdContact = {
-    id: uuid(),
+  const createdContact = new Contact({
     title,
     description,
     phone,
+    imageUrl: req.file.path,
     address,
     creator,
-  };
+  });
 
-  DUMMY_CONTACTS.push(createdContact);
+  let user;
+
+  try {
+    user = await User.findById(creator);
+  } catch (error) {
+    return next(
+      new HttpError("Creating a contact failed, please try again", 500)
+    );
+  }
+
+  if (!user) {
+    return next(new HttpError("Could not find the user for given id.", 404));
+  }
+
+  try {
+    const sess = await mongoose.startSession();
+    sess.startTransaction();
+    await createdContact.save({ session: sess });
+    user.contacts.push(createdContact);
+    await user.save({ session: sess });
+    await sess.commitTransaction();
+  } catch (error) {
+    const err = new HttpError("Could not create contact", 500);
+    return next(err);
+  }
 
   res.status(201).json({ contact: createdContact });
 };
 
+const updateContact = async (req, res, next) => {
+  const error = validationResult(req);
+
+  if (!error.isEmpty()) {
+    throw new HttpError("Invalid inputs, please check your data", 422);
+  }
+
+  const { title, description, phone, address } = req.body;
+  const contactId = req.params.cid;
+
+  let contact;
+  try {
+    contact = await Contact.findById(contactId);
+  } catch (err) {
+    const error = new HttpError(
+      "Something went wrong, could not find contact",
+      500
+    );
+
+    return next(error);
+  }
+
+  // const updatedContact = { ...DUMMY_CONTACTS.find((c) => c.id === contactId) };
+  // const contactIndex = DUMMY_CONTACTS.findIndex((c) => c.id === contactId);
+  contact.title = title;
+  contact.description = description;
+  contact.address = address;
+  contact.phone = phone;
+
+  try {
+    await contact.save();
+  } catch (error) {
+    const err = new HttpError("Could not update contact", 500);
+    return next(err);
+  }
+
+  res.status(200).json({ contact: contact.toObject({ getters: true }) });
+};
+
+const deleteContact = async (req, res, next) => {
+  const contactId = req.params.cid;
+
+  let contact;
+  try {
+    contact = await Contact.findById(contactId).populate("creator");
+  } catch (err) {
+    const error = new HttpError(
+      "Something went wrong, could not find contact",
+      500
+    );
+
+    return next(error);
+  }
+
+  if (!contact) {
+    return next(new HttpError("Could not find the contact for given id.", 404));
+  }
+
+  const imagePath = contact.imageUrl;
+
+  try {
+    const sess = await mongoose.startSession();
+    sess.startTransaction();
+    await contact.remove({ session: sess });
+    contact.creator.contacts.pull(contact);
+    await contact.creator.save({ session: sess });
+    await sess.commitTransaction();
+  } catch (error) {
+    const err = new HttpError("Could not delete contact", 500);
+
+    return next(err);
+  }
+  fs.unlink(imagePath, (error) => console.log(error));
+
+  res.status(200).json({ message: "Deleted contact" });
+};
+
 exports.getContactById = getContactById;
-exports.getContactByUserId = getContactByUserId;
+exports.getContactsByUserId = getContactsByUserId;
 exports.createContact = createContact;
 exports.getAllContacts = getAllContacts;
+exports.updateContact = updateContact;
+exports.deleteContact = deleteContact;

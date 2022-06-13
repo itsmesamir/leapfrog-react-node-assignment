@@ -3,7 +3,7 @@ import Button from "../../shared/components/FormElements/Button";
 
 import Card from "../../shared/components/UIElements/Card";
 import ContactItem from "./ContactItem";
-import './ContactList.css';
+import "./ContactList.css";
 
 const ContactList = (props) => {
   if (props.items.length === 0) {
@@ -11,7 +11,7 @@ const ContactList = (props) => {
       <div className="contact-list center">
         <Card>
           <h2>No Contacts found</h2>
-          <Button to = "/contacts/new">Share Contact</Button>
+          <Button to="/contacts/new">Share Contact</Button>
         </Card>
       </div>
     );
@@ -24,12 +24,13 @@ const ContactList = (props) => {
             key={contact.id}
             id={contact.id}
             name={contact.name}
-            title = {contact.title}
+            title={contact.title}
             description={contact.description}
-            address = {contact.address}
-            createrId = {contact.creator}
+            address={contact.address}
+            phone={contact.phone}
+            createrId={contact.creator}
             image={contact.imageUrl}
-            coordinates = {contact.location}
+            onDelete={props.onDeleteContact}
           />
         );
       })}

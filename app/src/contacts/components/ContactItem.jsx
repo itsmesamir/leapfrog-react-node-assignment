@@ -6,10 +6,13 @@ import Button from "../../shared/components/FormElements/Button";
 import "./ContactItem.css";
 import FavoritesContext from "../../shared/context/FavouritesContext";
 import { AuthContext } from "../../shared/context/auth-context";
+import ErrorModal from "../../shared/components/UIElements/ErrorModal";
+import LoadingSpinner from "../../shared/components/UIElements/LoadingSpinner";
 
 const ContactItem = (props) => {
   const favouriteCtx = useContext(FavoritesContext);
   const itemIsFavourite = favouriteCtx.itemIsFavorite(props.id);
+  const auth = useContext(AuthContext);
 
   function toggleFavoriteStatusHandler() {
     if (itemIsFavourite) {
@@ -23,12 +26,12 @@ const ContactItem = (props) => {
         address: props.address,
         createrId: props.creator,
         image: props.imageUrl,
-        coordinates: props.location,
       });
     }
   }
-  const auth = useContext(AuthContext);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [error, setError] = useState();
+  const [isLoading, setIsLoading] = useState(false);
 
   const showDeleteWarningHandler = () => {
     setShowConfirmModal(true);
@@ -38,12 +41,32 @@ const ContactItem = (props) => {
     setShowConfirmModal(false);
   };
 
-  const confirmDeleteHandler = () => {
+  const confirmDeleteHandler = async () => {
     setShowConfirmModal(false);
-    console.log("DELETING...");
+    try {
+      setIsLoading(true);
+      const response = await fetch(
+        `http://localhost:5000/api/contacts/${props.id}`,
+        { method: "DELETE" }
+      );
+
+      if (!response.ok) {
+        throw new Error("Something went wrong");
+      }
+
+      props.onDelete(props.id);
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const handleModalClear = () => setError(null);
+
   return (
     <React.Fragment>
+      <ErrorModal error={error} onClear={handleModalClear} />
       <Modal
         show={showConfirmModal}
         onCancel={cancelDeleteHandler}
@@ -64,24 +87,29 @@ const ContactItem = (props) => {
       </Modal>
       <li className="contact-item">
         <Card className="contact-item__content">
+          {isLoading && <LoadingSpinner asOverlay />}
           <div className="contact-item__image">
-            <img src={props.image} alt={props.title} />
+            <img
+              src={`http://localhost:5000/${props.image}`}
+              alt={props.title}
+            />
           </div>
           <div className="contact-item__info">
             <h2>{props.title}</h2>
             <h3>{props.address}</h3>
+            <h3>{props.phone}</h3>
             <p>{props.description}</p>
           </div>
           <div className="contact-item__actions">
-            {auth.isLoggedIn && (
+            {auth.userId === props.createrId && (
               <Button to={`/contacts/${props.id}`}>EDIT</Button>
             )}
-            {auth.isLoggedIn && (
+            {auth.userId === props.createrId && (
               <Button danger onClick={showDeleteWarningHandler}>
                 DELETE
               </Button>
             )}
-            {auth.isLoggedIn && (
+            {auth.userId === props.createrId && (
               <Button onClick={toggleFavoriteStatusHandler}>
                 {itemIsFavourite ? "Remove from Favorites" : "To Favorites"}
               </Button>

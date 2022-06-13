@@ -17,13 +17,16 @@ import { FavoritesContextProvider } from "./shared/context/FavouritesContext";
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userId, setUserId] = useState(false);
 
-  const login = useCallback(() => {
+  const login = useCallback((id) => {
     setIsLoggedIn(true);
+    setUserId(id);
   }, []);
 
   const logout = useCallback(() => {
     setIsLoggedIn(false);
+    setUserId(null);
   }, []);
 
   let routes;
@@ -67,7 +70,12 @@ const App = () => {
   }
   return (
     <AuthContext.Provider
-      value={{ isLoggedIn: isLoggedIn, login: login, logout: logout }}
+      value={{
+        isLoggedIn: isLoggedIn,
+        login: login,
+        userId: userId,
+        logout: logout,
+      }}
     >
       <FavoritesContextProvider>
         <Router>
