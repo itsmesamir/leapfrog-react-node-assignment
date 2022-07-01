@@ -1,4 +1,6 @@
 const User = require("../models/user");
+const bcrypt = require("bcrypt");
+const jsonWebToken = require("jsonwebtoken");
 const HttpError = require("../models/http-error");
 const { validationResult } = require("express-validator");
 
@@ -45,11 +47,20 @@ const signup = async (req, res, next) => {
     );
   }
 
+  let hashedPassword;
+  try {
+    hashedPassword = await bcrypt.hash(password, 12);
+  } catch (error) {
+    const err = new HttpError("Could not create user, please try again", 500);
+
+    return next(err);
+  }
+
   const createdUser = new User({
     name,
     email,
     imageUrl: req.file.path,
-    password,
+    password: hashedPassword,
     contacts: [],
   });
 
@@ -61,7 +72,23 @@ const signup = async (req, res, next) => {
     return next(err);
   }
 
-  res.status(201).json({ user: createdUser.toObject({ getters: true }) });
+  let token;
+
+  try {
+    token = jsonWebToken.sign(
+      { userId: createdUser.id, email: createdUser.email },
+      "secret",
+      { expiresIn: "1h" }
+    );
+  } catch (error) {
+    const err = new HttpError("Could not sign up", 500);
+
+    return next(err);
+  }
+
+  res
+    .status(201)
+    .json({ userId: createdUser.id, email: createdUser.email, token });
 };
 
 const login = async (req, res, next) => {
@@ -74,14 +101,42 @@ const login = async (req, res, next) => {
     return next(new HttpError("Sign up failed please try again", 500));
   }
 
-  if (!existingUser || existingUser.password !== password) {
+  if (!existingUser) {
     return next(new HttpError("Invalid credentails, could not log in.", 401));
   }
 
-  res.json({
-    message: "Logged in successfully!",
-    user: existingUser.toObject({ getters: true }),
-  });
+  let isValidPassword = false;
+
+  try {
+    isValidPassword = await bcrypt.compare(password, existingUser.password);
+  } catch (error) {
+    const err = new HttpError(
+      "Something went wrong, please check your credentials.",
+      500
+    );
+
+    return next(err);
+  }
+
+  if (!isValidPassword) {
+    return next(new HttpError("Invalid credentails, could not log in.", 401));
+  }
+
+  let token;
+
+  try {
+    token = jsonWebToken.sign(
+      { userId: existingUser.id, email: existingUser.email },
+      "secret",
+      { expiresIn: "1h" }
+    );
+  } catch (error) {
+    const err = new HttpError("Could not login up", 500);
+
+    return next(err);
+  }
+
+  res.json({ userId: existingUser.id, email: existingUser.email, token });
 };
 
 exports.getUsers = getUsers;

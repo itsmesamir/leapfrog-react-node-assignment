@@ -86,7 +86,7 @@ const Auth = () => {
         }
 
         setIsLoading(false);
-        auth.login(responseData.user.id);
+        auth.login(responseData.userId, responseData.token);
       } catch (error) {
         setIsLoading(false);
         setError(error?.message || "Something went wrong, please try again.");
@@ -110,7 +110,7 @@ const Auth = () => {
         }
 
         setIsLoading(false);
-        auth.login(responseData.user.id);
+        auth.login(responseData.userId, responseData.token);
       } catch (error) {
         setIsLoading(false);
         setError(error?.message || "Something went wrong, please try again.");

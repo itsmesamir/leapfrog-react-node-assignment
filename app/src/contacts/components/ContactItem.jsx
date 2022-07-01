@@ -25,7 +25,7 @@ const ContactItem = (props) => {
         description: props.description,
         address: props.address,
         createrId: props.creator,
-        image: props.imageUrl,
+        image: props.image,
       });
     }
   }
@@ -47,7 +47,12 @@ const ContactItem = (props) => {
       setIsLoading(true);
       const response = await fetch(
         `http://localhost:5000/api/contacts/${props.id}`,
-        { method: "DELETE" }
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: "Bearer " + auth.token,
+          },
+        }
       );
 
       if (!response.ok) {

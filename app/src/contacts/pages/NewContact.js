@@ -59,6 +59,10 @@ const NewContact = () => {
       setIsLoading(true);
       const response = await fetch("http://localhost:5000/api/contacts", {
         method: "POST",
+        headers: {
+          Authorization: "Bearer " + auth.token,
+        },
+        mode: "cors",
         body: formData,
       });
 
@@ -68,7 +72,6 @@ const NewContact = () => {
       }
 
       setIsLoading(false);
-      auth.login();
 
       history.push("/");
     } catch (error) {

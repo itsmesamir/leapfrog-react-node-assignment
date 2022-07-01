@@ -147,8 +147,12 @@ const updateContact = async (req, res, next) => {
     return next(error);
   }
 
-  // const updatedContact = { ...DUMMY_CONTACTS.find((c) => c.id === contactId) };
-  // const contactIndex = DUMMY_CONTACTS.findIndex((c) => c.id === contactId);
+  if (contact.creator.toString() !== req.userData.userId) {
+    const error = new HttpError("Could not edit the contact.", 401);
+
+    return next(error);
+  }
+
   contact.title = title;
   contact.description = description;
   contact.address = address;
@@ -181,6 +185,12 @@ const deleteContact = async (req, res, next) => {
 
   if (!contact) {
     return next(new HttpError("Could not find the contact for given id.", 404));
+  }
+
+  if (contact.creator.id !== req.userData.userId) {
+    const error = new HttpError("Could not delete the contact.", 401);
+
+    return next(error);
   }
 
   const imagePath = contact.imageUrl;

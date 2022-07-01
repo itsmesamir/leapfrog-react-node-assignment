@@ -99,6 +99,7 @@ const UpdateContact = () => {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
+            Authorization: "Bearer " + auth.token,
           },
           body: JSON.stringify({
             title: formState.inputs.title.value,
@@ -115,7 +116,6 @@ const UpdateContact = () => {
       }
 
       setIsLoading(false);
-      auth.login();
 
       history.push("/" + auth.userId + "/contacts");
     } catch (error) {

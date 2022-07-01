@@ -2,6 +2,7 @@ const express = require("express");
 const { check } = require("express-validator");
 
 const contactsControllers = require("../controllers/contacts-controllers");
+const checkAuth = require("../middleware/auth");
 const fileUpload = require("../middleware/file-upload");
 
 const router = express.Router();
@@ -11,6 +12,8 @@ router.get("/:pid", contactsControllers.getContactById);
 router.get("/user/:uid", contactsControllers.getContactsByUserId);
 
 router.get("/", contactsControllers.getAllContacts);
+
+router.use(checkAuth);
 
 router.post(
   "/",

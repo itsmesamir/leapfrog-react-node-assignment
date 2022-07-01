@@ -22,13 +22,14 @@ const FavoritesContact = () => {
     content = <ContactList items={favoritesCtx.favorites} />;
   }
 
+  console.log("content", content);
   return (
     <React.Fragment>
       <Card className="contact-list center">
         <h2>My Favorites</h2>
       </Card>
       {/* <Card className="contact-list center"> */}
-      {content}n
+      {content}
     </React.Fragment>
   );
 };
