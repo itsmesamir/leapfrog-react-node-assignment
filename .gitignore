@@ -1,3 +1,4 @@
+/node_modules
 .yarn-integrity
 
 npm-debug.log*
