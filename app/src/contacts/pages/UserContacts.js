@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
+import Button from "../../shared/components/FormElements/Button";
+import Card from "../../shared/components/UIElements/Card";
 import ErrorModal from "../../shared/components/UIElements/ErrorModal";
 import LoadingSpinner from "../../shared/components/UIElements/LoadingSpinner";
 
@@ -42,6 +44,17 @@ const UserContacts = () => {
       prevobj.filter((contact) => contact.id !== contactId)
     );
   };
+
+  if (error) {
+    return (
+      <div className="contact-list center">
+        <Card>
+          <h2>No Contacts found</h2>
+          <Button to="/contacts/new">Share Contact</Button>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <>
