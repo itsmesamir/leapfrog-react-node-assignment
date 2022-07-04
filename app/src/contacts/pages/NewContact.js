@@ -57,14 +57,17 @@ const NewContact = () => {
       formData.append("imageUrl", formState.inputs.imageUrl.value);
 
       setIsLoading(true);
-      const response = await fetch("http://localhost:5000/api/contacts", {
-        method: "POST",
-        headers: {
-          Authorization: "Bearer " + auth.token,
-        },
-        mode: "cors",
-        body: formData,
-      });
+      const response = await fetch(
+        process.env.REACT_APP_BACKEND_URL + "/contacts",
+        {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer " + auth.token,
+          },
+          mode: "cors",
+          body: formData,
+        }
+      );
 
       const responseData = await response.json();
       if (!response.ok) {

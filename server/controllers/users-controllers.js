@@ -77,7 +77,7 @@ const signup = async (req, res, next) => {
   try {
     token = jsonWebToken.sign(
       { userId: createdUser.id, email: createdUser.email },
-      "secret",
+      process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
   } catch (error) {
@@ -127,7 +127,7 @@ const login = async (req, res, next) => {
   try {
     token = jsonWebToken.sign(
       { userId: existingUser.id, email: existingUser.email },
-      "secret",
+      process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
   } catch (error) {

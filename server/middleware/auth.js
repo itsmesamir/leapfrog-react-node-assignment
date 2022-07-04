@@ -7,14 +7,13 @@ const checkAuth = (req, res, next) => {
   }
   try {
     const token = req.headers.authorization.split(" ")[1];
-    console.log("token", token);
     if (!token) {
       const error = new HttpError("Authorization failed.", 401);
 
       return next(error);
     }
 
-    const decodedToken = jwt.verify(token, "secret");
+    const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
     req.userData = { userId: decodedToken.userId };
     next();
   } catch (error) {

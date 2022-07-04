@@ -22,7 +22,6 @@ const FavoritesContact = () => {
     content = <ContactList items={favoritesCtx.favorites} />;
   }
 
-  console.log("content", content);
   return (
     <React.Fragment>
       <Card className="contact-list center">

@@ -48,7 +48,7 @@ const UpdateContact = () => {
     try {
       setIsLoading(true);
       const response = await fetch(
-        `http://localhost:5000/api/contacts/${contactId}`
+        `${process.env.REACT_APP_BACKEND_URL}/contacts/${contactId}`
       );
       const responseData = await response.json();
 
@@ -94,7 +94,7 @@ const UpdateContact = () => {
     try {
       setIsLoading(true);
       const response = await fetch(
-        `http://localhost:5000/api/contacts/${contactId}`,
+        `${process.env.REACT_APP_BACKEND_URL}/contacts/${contactId}`,
         {
           method: "PUT",
           headers: {

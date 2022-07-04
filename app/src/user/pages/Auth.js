@@ -69,16 +69,19 @@ const Auth = () => {
     setIsLoading(true);
     if (isLoginMode) {
       try {
-        const response = await fetch("http://localhost:5000/api/users/login", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: formState.inputs.email.value,
-            password: formState.inputs.password.value,
-          }),
-        });
+        const response = await fetch(
+          process.env.REACT_APP_BACKEND_URL + "/users/login",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: formState.inputs.email.value,
+              password: formState.inputs.password.value,
+            }),
+          }
+        );
 
         const responseData = await response.json();
         if (!response.ok) {
@@ -99,10 +102,13 @@ const Auth = () => {
         formData.append("password", formState.inputs.password.value);
         formData.append("imageUrl", formState.inputs.imageUrl.value);
 
-        const response = await fetch("http://localhost:5000/api/users/signup", {
-          method: "POST",
-          body: formData,
-        });
+        const response = await fetch(
+          process.env.REACT_APP_BACKEND_URL + "/users/signup",
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
 
         const responseData = await response.json();
         if (!response.ok) {

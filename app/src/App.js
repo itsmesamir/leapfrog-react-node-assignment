@@ -1,20 +1,26 @@
-import React from "react";
+import React, { Suspense } from "react";
 import {
   BrowserRouter as Router,
   Redirect,
   Route,
   Switch,
 } from "react-router-dom";
-import NewContact from "./contacts/pages/NewContact";
-import UpdateContact from "./contacts/pages/UpdateContact";
-import UserContacts from "./contacts/pages/UserContacts";
 import MainNavigation from "./shared/components/Navigation/MainNavigation";
-import Auth from "./user/pages/Auth";
-import Users from "./user/pages/Users";
-import FavoritesContact from "./contacts/pages/Favourites";
+import LoadingSpinner from "./shared/components/UIElements/LoadingSpinner";
 import { AuthContext } from "./shared/context/auth-context";
 import { FavoritesContextProvider } from "./shared/context/FavouritesContext";
 import { useAuth } from "./shared/hooks/auth-hook";
+
+const Users = React.lazy(() => import("./user/pages/Users"));
+const Auth = React.lazy(() => import("./user/pages/Auth"));
+const NewContact = React.lazy(() => import("./contacts/pages/NewContact"));
+const UpdateContact = React.lazy(() =>
+  import("./contacts/pages/UpdateContact")
+);
+const UserContacts = React.lazy(() => import("./contacts/pages/UserContacts"));
+const FavoritesContact = React.lazy(() =>
+  import("./contacts/pages/Favourites")
+);
 
 const App = () => {
   const { token, login, logout, userId } = useAuth();
@@ -71,7 +77,18 @@ const App = () => {
       <FavoritesContextProvider>
         <Router>
           <MainNavigation />
-          <main>{routes}</main>
+          {/* <main>{routes}</main> */}
+          <main>
+            <Suspense
+              fallback={
+                <div classname="center">
+                  <LoadingSpinner asOverlay />
+                </div>
+              }
+            >
+              {routes}
+            </Suspense>
+          </main>
         </Router>
       </FavoritesContextProvider>
     </AuthContext.Provider>
